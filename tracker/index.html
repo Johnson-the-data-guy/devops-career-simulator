@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevOps career simulator</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#ffffff; --border:#e3e5ea;
+    --tp:#191d28; --ts:#6b7280; --tf:#9aa0ab;
+    --accent:#3f3ac9; --accent-soft:#eeeefc;
+    --done:#15803d;
+    --theory:#7c3aed; --theory-soft:#f4efff;
+    --build:#0369a1; --build-soft:#e8f4fb;
+    --debug:#b45309; --debug-soft:#fdf3e3;
+    --shift:#be123c; --shift-soft:#fdeef1;
+    --gold:#a16207; --gold-soft:#fefce8;
+    --drill:#0f766e; --drill-soft:#e6f6f3;
+    --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#101219; --card:#191c26; --border:#292d3a;
+      --tp:#e8e9ef; --ts:#969aa8; --tf:#6e7280;
+      --accent:#948ef8; --accent-soft:#22233d;
+      --done:#4ade80;
+      --theory:#c4a8ff; --theory-soft:#241a38;
+      --build:#7dd3fc; --build-soft:#0d2436;
+      --debug:#f0b45e; --debug-soft:#2b2210;
+      --shift:#fb7185; --shift-soft:#331119;
+      --gold:#fcd34d; --gold-soft:#2a2410;
+      --drill:#5eead4; --drill-soft:#0f2b27;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#101219; --card:#191c26; --border:#292d3a;
+    --tp:#e8e9ef; --ts:#969aa8; --tf:#6e7280;
+    --accent:#948ef8; --accent-soft:#22233d;
+    --done:#4ade80;
+    --theory:#c4a8ff; --theory-soft:#241a38;
+    --build:#7dd3fc; --build-soft:#0d2436;
+    --debug:#f0b45e; --debug-soft:#2b2210;
+    --shift:#fb7185; --shift-soft:#331119;
+    --gold:#fcd34d; --gold-soft:#2a2410;
+    --drill:#5eead4; --drill-soft:#0f2b27;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--tp);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    padding:18px 16px 70px;line-height:1.5;}
+  .wrap{max-width:560px;margin:0 auto;}
+  h1{font-size:19px;font-weight:600;margin-bottom:2px;}
+  .sub{font-size:12.5px;color:var(--ts);margin-bottom:10px;}
+  .syncline{font-family:var(--mono);font-size:10px;color:var(--tf);margin-bottom:14px;}
+  .syncline b{color:var(--done);font-weight:600;}
+  .syncline i{color:var(--gold);font-style:normal;font-weight:600;}
+
+  .topbar{display:flex;gap:8px;margin-bottom:10px;}
+  .chip{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;text-align:center;}
+  .chip .k{font-family:var(--mono);font-size:9.5px;color:var(--tf);display:block;text-transform:uppercase;letter-spacing:.04em;}
+  .chip .v{font-size:17px;font-weight:700;color:var(--accent);}
+  .chip.gold .v{color:var(--gold);}
+  .chip button{margin-top:5px;font-size:10.5px;font-family:var(--mono);border:1px solid var(--border);
+    background:transparent;color:var(--ts);border-radius:7px;padding:3px 8px;cursor:pointer;}
+  .chip button:active{background:var(--accent-soft);}
+  .grand{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px 13px;margin-bottom:16px;
+    display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .grand span:first-child{font-size:11.5px;color:var(--tf);font-family:var(--mono);}
+  .grand span:last-child{font-family:var(--mono);font-size:12px;color:var(--ts);}
+  .grand.hidden span:last-child{color:var(--tf);}
+
+  .project{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:11px;overflow:hidden;}
+  .phead{padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:5px;}
+  .ptop{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .pnum{font-family:var(--mono);font-size:11px;color:var(--accent);}
+  .ptitle{font-size:15px;font-weight:600;}
+  .pscore{font-family:var(--mono);font-size:11.5px;color:var(--gold);white-space:nowrap;}
+  .pmeta{font-family:var(--mono);font-size:10.5px;color:var(--tf);}
+  .due{font-family:var(--mono);font-size:10.5px;color:var(--gold);}
+  .due.late{color:var(--shift);font-weight:600;}
+  .due.done{color:var(--done);}
+  .pbrief{font-size:12.5px;color:var(--ts);}
+  .pbar{height:4px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:4px;display:flex;}
+  .seg{height:100%;}
+  .chev{display:inline-block;font-family:var(--mono);color:var(--tf);transition:transform .2s ease;}
+  .phead.open .chev{transform:rotate(90deg);}
+
+  .body{display:none;border-top:1px solid var(--border);padding:4px 9px 11px;}
+  .body.open{display:block;}
+
+  .stage{margin-top:13px;border:1px solid var(--border);border-radius:11px;overflow:hidden;}
+  .shead{padding:9px 11px;}
+  .skind{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.07em;opacity:.8;display:block;}
+  .sname{font-size:13.5px;font-weight:700;}
+  .sdays{font-family:var(--mono);font-size:10px;opacity:.75;float:right;}
+  .st-theory{background:var(--theory-soft);color:var(--theory);}
+  .st-build{background:var(--build-soft);color:var(--build);}
+  .st-debug{background:var(--debug-soft);color:var(--debug);}
+  .st-drill{background:var(--drill-soft);color:var(--drill);}
+  .task.drilltask{border-left:2px solid var(--drill);border-radius:0 8px 8px 0;margin-left:2px;}
+  .phhead.reps{background:var(--drill-soft);}
+  .phhead.reps .phtag{color:var(--drill);}
+  .reps .covers{margin:4px 0 6px 10px;}
+  .exam.recall{background:var(--accent-soft);}
+  .exam.recall .en{color:var(--accent);}
+  .exam.recall input{accent-color:var(--accent);}
+  .pub{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:4px 9px 11px;margin-bottom:16px;}
+  .pubhead{padding:9px 7px 4px;}
+  .pubhead .skind{color:var(--accent);}
+  .pubhead .sname{font-size:14px;}
+  .pubnote{font-size:11.5px;color:var(--ts);padding:0 7px 6px;font-style:italic;}
+  .task.posttask{border-left:2px solid var(--accent);border-radius:0 8px 8px 0;margin-left:2px;}
+  .gatelock{opacity:.45;}
+  .gatelock input{cursor:not-allowed;}
+  .sintro{font-size:11.5px;color:var(--ts);padding:7px 11px 0;font-style:italic;}
+  .sgate{font-size:11px;color:var(--tf);padding:6px 11px 8px;border-bottom:1px solid var(--border);}
+  .sbody{padding:3px 5px 7px;}
+
+  .topic{padding:9px 8px 4px;border-bottom:1px dashed var(--border);}
+  .topic:last-of-type{border-bottom:none;}
+  .thead{display:flex;gap:9px;align-items:flex-start;}
+  .thead input{margin-top:4px;width:14px;height:14px;accent-color:var(--theory);flex-shrink:0;cursor:pointer;}
+  .tname{font-size:13.5px;font-weight:600;}
+  .topic.checked .tname{color:var(--ts);}
+  .covers{list-style:none;margin:5px 0 4px 23px;}
+  .covers li{font-size:12px;color:var(--ts);padding:2.5px 0 2.5px 12px;position:relative;line-height:1.45;}
+  .covers li:before{content:"–";position:absolute;left:0;color:var(--tf);}
+  .dblock{margin:6px 5px 4px;padding:10px 11px;border-radius:9px;background:var(--build-soft);
+    border:1px solid var(--border);}
+  .dhead{display:flex;gap:9px;align-items:flex-start;}
+  .dhead input{margin-top:3px;width:15px;height:15px;accent-color:var(--build);flex-shrink:0;cursor:pointer;}
+  .dname{font-size:13px;font-weight:700;color:var(--build);}
+  .dblock .covers{margin:6px 0 0 23px;}
+  .dblock .covers li{font-size:11.5px;}
+  .dnote{font-family:var(--mono);font-size:9.5px;color:var(--tf);display:block;margin-top:2px;}
+  .exam{margin:8px 6px 2px;padding:10px 11px;border-radius:9px;background:var(--gold-soft);
+    border:1px solid var(--border);display:flex;gap:9px;align-items:flex-start;}
+  .exam input{margin-top:3px;width:15px;height:15px;accent-color:var(--gold);flex-shrink:0;cursor:pointer;}
+  .exam .en{font-size:13px;font-weight:700;color:var(--gold);}
+  .exam .ec{font-family:var(--mono);font-size:10px;color:var(--tf);display:block;margin-top:2px;}
+
+  .phase{margin-top:8px;}
+  .phhead{padding:6px 8px;border-radius:7px;background:var(--accent-soft);margin-bottom:2px;}
+  .phtag{font-family:var(--mono);font-size:9px;color:var(--accent);display:block;}
+  .phhead.shift{background:var(--shift-soft);}
+  .phhead.carried{background:var(--gold-soft);}
+  .phhead.design{background:var(--theory-soft);}
+  .phhead.design .phtag{color:var(--theory);}
+  .task.designtask{border-left:2px solid var(--theory);border-radius:0 8px 8px 0;margin-left:2px;}
+  .phhead.carried .phtag{color:var(--gold);}
+  .task.carriedtask{border-left:2px solid var(--gold);border-radius:0 8px 8px 0;margin-left:2px;}
+  .phhead.shift .phtag{color:var(--shift);}
+  .phname{font-size:12.5px;font-weight:600;}
+  .task{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;}
+  .task:hover{background:var(--accent-soft);}
+  .task input{margin-top:3px;width:15px;height:15px;accent-color:var(--done);flex-shrink:0;cursor:pointer;}
+  .tl{font-size:13px;}
+  .tc{font-family:var(--mono);font-size:10px;color:var(--tf);display:block;margin-top:2px;}
+  .task.checked .tl{color:var(--ts);text-decoration:line-through;}
+  .cert{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:14px;margin-bottom:11px;overflow:hidden;}
+  .cert .phead{padding:12px 16px;}
+  .cert .pnum{color:var(--gold);}
+  .task.certtask{border-left:2px solid var(--gold);border-radius:0 8px 8px 0;margin-left:2px;}
+  .certnote{font-size:11.5px;color:var(--ts);padding:8px 9px 2px;font-style:italic;}
+  .ontime{margin:9px 6px 2px;padding:9px 11px;border-radius:9px;background:var(--gold-soft);
+    border:1px dashed var(--border);display:flex;gap:9px;align-items:flex-start;}
+  .ontime input{margin-top:2px;width:15px;height:15px;accent-color:var(--gold);flex-shrink:0;cursor:pointer;}
+  .ontime span{font-size:12px;color:var(--ts);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>DevOps career simulator</h1>
+  <p class="sub">Fifteen companies · theory → drill → build → debug · 135 days budgeted + 15 cert days · warm-up reps unbudgeted</p>
+  <p class="syncline" id="syncline">connecting…</p>
+
+  <div class="topbar">
+    <div class="chip"><span class="k">check-ins</span><span class="v" id="ci">0</span>
+      <button id="cib" hidden>+ today</button></div>
+    <div class="chip gold"><span class="k">check-in pts</span><span class="v" id="cip">0</span></div>
+    <div class="chip"><span class="k">posts</span><span class="v" id="posts">0</span></div>
+  </div>
+  <div class="grand hidden" id="grand"><span>grand total</span><span id="gt">tap to reveal</span></div>
+
+  <div class="pub" id="pub"></div>
+
+  <div id="projects"></div>
+</div>
+
+<script src="data.js"></script>
+<script>
+const PTS={cert:10,topic:10,exam:60,design:40,build:15,debug:20,stage:50,project:100,ontime:100,checkin:5,drill:10,recall:5,post:10};
+const KEY='devops-sim-v4';
+const DOCPATH='state/tracker';
+
+/* Close dates — 1.5x the day budget, Mon–Sat, recomputed 22 Oct 2026 */
+/* Shifted 14 Nov 2026 for the certification blocks (1.5x their day budget): 07 +14 working days, 08–15 +23 */
+const DUE={cafe:'2026-10-23',studio:'2026-11-02',logistics:'2026-12-02',cratebox:'2026-12-18',
+  scriptly:'2027-01-04',groundwork:'2027-01-22',orbital:'2027-03-05',pulse:'2027-03-30',
+  juicyway:'2027-04-20',larkspur:'2027-05-01',vantage:'2027-05-18',solstice:'2027-05-28',
+  nomad:'2027-06-11',waypoint:'2027-06-22',meridian:'2027-07-03'};
+
+function dueLabel(pid,complete){
+  const d=DUE[pid]; if(!d) return '';
+  const dt=new Date(d+'T00:00:00');
+  const txt=dt.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+  if(complete) return `<span class="due done">closed · due ${txt}</span>`;
+  const late=new Date()>new Date(d+'T23:59:59');
+  const days=Math.ceil((dt-new Date())/86400000);
+  const tail=late?' · overdue':(days>=0&&days<=7?` · ${days}d`:'');
+  return `<span class="due${late?' late':''}">closes ${txt}${tail}</span>`;
+}
+let state={checkins:0};
+
+const DEFAULTS={};
+['cafe|build|phase_1|0','cafe|build|phase_1|1','cafe|build|phase_1|2','cafe|build|phase_1|3',
+ 'cafe|build|phase_2|0','cafe|build|phase_2|1','cafe|build|phase_2|2','cafe|build|phase_2|3',
+ 'cafe|build|submit|0',
+ 'studio|build|phase_1|0','studio|build|phase_1|1','studio|build|phase_1|2','studio|build|phase_1|3',
+ 'studio|build|phase_2|0','studio|build|phase_2|1','studio|build|phase_2|2','studio|build|phase_2|3',
+ 'studio|build|submit|0'].forEach(k=>DEFAULTS[k]=true);
+
+/* ---- storage: server-side db when available, local store otherwise ---- */
+let DOC=null, unsub=null, lastJson='';
+
+function setSync(msg){document.getElementById('syncline').innerHTML=msg;}
+
+async function localGet(){
+  try{const r=await window.storage.get(KEY,false); if(r&&r.value)return JSON.parse(r.value);}catch(e){}
+  try{const v=localStorage.getItem(KEY); if(v)return JSON.parse(v);}catch(e){}
+  return null;
+}
+async function localSet(){
+  try{await window.storage.set(KEY,JSON.stringify(state),false);return;}catch(e){}
+  try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+}
+
+async function save(){}
+
+async function load(){
+  state={checkins:0,...DEFAULTS};
+  try{
+    const r=await fetch('state.json',{cache:'no-cache'});
+    const d=await r.json();
+    state=JSON.parse(d.json);
+    const when=new Date(d.updatedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    setSync('read-only snapshot · <b>updated '+when+'</b>');
+  }catch(e){
+    setSync('<i>could not load state.json</i>');
+  }
+}
+
+const id=(...a)=>a.join('|');
+const COL={theory:'--theory',drill:'--drill',build:'--build',debug:'--debug'};
+
+function theoryDone(p){const s=p.stages.find(x=>x.kind==='theory');return s.topics.every((t,i)=>state[id(p.id,'theory','topic',i)]);}
+function drillDone(p){const s=p.stages.find(x=>x.kind==='drill');if(!s)return true;return s.exercises.every((x,i)=>state[id(p.id,'drill','ex',i)]);}
+const ORIENT_V1=[
+  {t:'Scaffold the dev team\'s app code — Claude hands over the Claude Code prompt.',c:'orientation · before anything else'},
+  {t:'Dev side taught, then tested: repo layout, runtime, dependencies + lockfile, run locally, build + artifact, tests, dev workflow / CI, config, data + migrations.',c:'orientation · dev side'},
+  {t:'Ops side taught, then tested: process + entry file, port, what it talks to, secrets, health, logs + metrics, state, start + stop, resource shape.',c:'orientation · ops side'},
+  {t:'One request traced end to end: browser → entry point → app code → data layer → back.',c:'orientation · request trace'},
+  {t:'README orientation table filled in, in your own words.',c:'orientation · gate to the design'}];
+const ORIENT_V2=[
+  {t:'Scaffold the new code for this version — Claude hands over the Claude Code prompt.',c:'orientation · before anything else'},
+  {t:'Re-run orientation for every part the new code changed — taught, then tested — before re-architecting.',c:'orientation · phase shift'},
+  {t:'README orientation table updated for what changed.',c:'orientation · gate to the design'}];
+const ORIENT_SKIP=new Set(['cafe','studio']); /* orientation starts at 03 Roadrunner */
+function orientTasks(p,s){if(s.kind!=='build'||ORIENT_SKIP.has(p.id))return null;return s.v===1?ORIENT_V1:ORIENT_V2;}
+function orientTag(s){return 'orient_v'+s.v;}
+function repsDone(p){const s=p.stages.find(x=>x.kind==='drill');if(!s||!s.reps.length)return true;return !!state[id(p.id,'drill','reps',0)];}
+
+function scoreProject(p){
+  let earned=0,possible=0;
+  p.stages.forEach(s=>{
+    let sd=0,st=0;
+    if(s.kind==='theory'){
+      if(RECALL_FROM.has(p.id)){possible+=PTS.recall;st++;
+        if(state[id(p.id,'theory','recall',0)]){earned+=PTS.recall;sd++;}}
+      s.topics.forEach((t,i)=>{possible+=PTS.topic;st++;
+        if(state[id(p.id,'theory','topic',i)]){earned+=PTS.topic;sd++;}});
+      possible+=PTS.exam;st++;
+      if(state[id(p.id,'theory','exam',0)]){earned+=PTS.exam;sd++;}
+    }else if(s.kind==='drill'){
+      s.exercises.forEach((x,i)=>{possible+=PTS.drill;st++;
+        if(state[id(p.id,'drill','ex',i)]){earned+=PTS.drill;sd++;}});
+      if(s.reps.length){possible+=PTS.drill;st++;
+        if(state[id(p.id,'drill','reps',0)]){earned+=PTS.drill;sd++;}}
+      if(!s.exercises.length){possible-=PTS.stage;}
+    }else{
+      const per=s.kind==='debug'?PTS.debug:PTS.build;
+      const ot=orientTasks(p,s); if(ot)ot.forEach((t,i)=>{possible+=PTS.build;st++;
+        if(state[id(p.id,'build',orientTag(s),i)]){earned+=PTS.build;sd++;}});
+      if(s.design){possible+=PTS.design;st++;
+        if(state[id(p.id,'build','design',s.v)]){earned+=PTS.design;sd++;}}
+      s.phases.forEach(ph=>ph.tasks.forEach((t,i)=>{possible+=per;st++;
+        if(state[id(p.id,s.kind,ph.tag,i)]){earned+=per;sd++;}}));
+    }
+    possible+=PTS.stage;
+    if(st>0&&sd===st&&!(s.kind==='drill'&&!s.exercises.length))earned+=PTS.stage;
+  });
+  POST_SLOTS.forEach((x,i)=>{possible+=PTS.post;if(state[id(p.id,'post',i)])earned+=PTS.post;});
+  possible+=PTS.project+PTS.ontime;
+  const postsDone=POST_SLOTS.every((x,i)=>state[id(p.id,'post',i)]);
+  const allDone=postsDone&&p.stages.every(s=>{
+    if(s.kind==='theory')return s.topics.every((t,i)=>state[id(p.id,'theory','topic',i)])&&state[id(p.id,'theory','exam',0)]&&(!RECALL_FROM.has(p.id)||state[id(p.id,'theory','recall',0)]);
+    if(s.kind==='drill')return s.exercises.every((x,i)=>state[id(p.id,'drill','ex',i)])&&(!s.reps.length||state[id(p.id,'drill','reps',0)]);
+    const ot=orientTasks(p,s); if(ot&&!ot.every((t,i)=>state[id(p.id,'build',orientTag(s),i)]))return false;
+    if(s.design&&!state[id(p.id,'build','design',s.v)])return false;
+    return s.phases.every(ph=>ph.tasks.every((t,i)=>state[id(p.id,s.kind,ph.tag,i)]));
+  });
+  if(allDone)earned+=PTS.project;
+  if(state[id(p.id,'ontime')])earned+=PTS.ontime;
+  return {earned,possible};
+}
+
+function stageCounts(p,s){
+  let d=0,t=0;
+  if(s.kind==='theory'){
+    if(RECALL_FROM.has(p.id)){t++;if(state[id(p.id,'theory','recall',0)])d++;}
+    s.topics.forEach((x,i)=>{t++;if(state[id(p.id,'theory','topic',i)])d++;});
+    t++;if(state[id(p.id,'theory','exam',0)])d++;
+  }else if(s.kind==='drill'){
+    s.exercises.forEach((x,i)=>{t++;if(state[id(p.id,'drill','ex',i)])d++;});
+    if(s.reps.length){t++;if(state[id(p.id,'drill','reps',0)])d++;}
+  }else{
+    const ot=orientTasks(p,s); if(ot)ot.forEach((x,i)=>{t++;if(state[id(p.id,'build',orientTag(s),i)])d++;});
+    if(s.design){t++;if(state[id(p.id,'build','design',s.v)])d++;}
+    s.phases.forEach(ph=>ph.tasks.forEach((x,i)=>{t++;if(state[id(p.id,s.kind,ph.tag,i)])d++;}));
+  }
+  return {d,t};
+}
+
+function render(){
+  const root=document.getElementById('projects');
+  const open=new Set([...root.querySelectorAll('.body.open')].map(e=>e.dataset.pid));
+  root.innerHTML='';
+  let gEarned=0,gPossible=0;
+
+  PROJECTS.forEach(p=>{
+    const sc=scoreProject(p); gEarned+=sc.earned; gPossible+=sc.possible;
+    const counts=p.stages.map(s=>({kind:s.kind,...stageCounts(p,s)}));
+    const totT=counts.reduce((a,c)=>a+c.t,0);
+    const totD=counts.reduce((a,c)=>a+c.d,0);
+
+    const el=document.createElement('div');el.className='project';
+    const head=document.createElement('div');
+    head.className='phead'+(open.has(p.id)?' open':'');
+    const segs=counts.map(c=>{
+      const w=totT?(c.t/totT)*100:0, f=c.t?(c.d/c.t)*100:0;
+      return `<span class="seg" style="width:${w}%;background:linear-gradient(to right,var(${COL[c.kind]}) ${f}%,var(--border) ${f}%)"></span>`;
+    }).join('');
+    head.innerHTML=`<div class="ptop"><span><span class="pnum">${p.n}</span> <span class="ptitle">${p.title}</span></span>
+      <span class="pscore">${sc.earned}/${sc.possible} <span class="chev">›</span></span></div>
+      <div class="pmeta">${p.stack} · ${p.days} day budget</div>
+      <div class="pmeta">${dueLabel(p.id, totT>0&&totD===totT)}</div>
+      <div class="pbrief">${p.brief}</div>
+      <div class="pbar">${segs}</div>`;
+
+    const body=document.createElement('div');
+    body.className='body'+(open.has(p.id)?' open':'');
+    body.dataset.pid=p.id;
+
+    p.stages.forEach(s=>{
+      const c=stageCounts(p,s);
+      const se=document.createElement('div');se.className='stage';
+      se.innerHTML=`<div class="shead st-${s.kind}">
+        <span class="sdays">${s.days?s.days+'d':(s.kind==='drill'?'unbudgeted':'done')} · ${c.d}/${c.t}</span>
+        <span class="skind">${s.kind}${s.v?' v'+s.v:''}</span><span class="sname">${s.name}</span></div>
+        ${s.intro?`<div class="sintro">${s.intro}</div>`:''}
+        <div class="sgate">${s.gate}</div>`;
+      const sb=document.createElement('div');sb.className='sbody';
+
+      if(s.kind==='theory'){
+        if(RECALL_FROM.has(p.id)){
+          const rid=id(p.id,'theory','recall',0); const ron=!!state[rid];
+          const re=document.createElement('label'); re.className='exam recall';
+          re.innerHTML=`<input type="checkbox" ${ron?'checked':''} data-id="${rid}">
+            <span><span class="en">Recall check — open the block with this</span><span class="ec">five closed-book questions from earlier blocks · ${PTS.recall} pts</span></span>`;
+          sb.appendChild(re);
+        }
+        s.topics.forEach((t,i)=>{
+          const tid=id(p.id,'theory','topic',i); const on=!!state[tid];
+          const te=document.createElement('div');
+          te.className='topic'+(on?' checked':'');
+          te.innerHTML=`<label class="thead"><input type="checkbox" ${on?'checked':''} data-id="${tid}">
+            <span class="tname">${t.t}</span></label>
+            <ul class="covers">${t.c.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+          sb.appendChild(te);
+        });
+        const eid=id(p.id,'theory','exam',0); const eon=!!state[eid];
+        const elock=!eon&&!drillDone(p);
+        const ee=document.createElement('label'); ee.className='exam'+(elock?' gatelock':'');
+        ee.innerHTML=`<input type="checkbox" ${eon?'checked':''} ${elock?'disabled':''} data-id="${eid}">
+          <span><span class="en">${s.exam.t}</span><span class="ec">${s.exam.c} · ${PTS.exam} pts · unlocks build${elock?' · locked until Drill is complete':''}</span></span>`;
+        sb.appendChild(ee);
+      }else if(s.kind==='drill'){
+        const dlock=!theoryDone(p);
+        s.exercises.forEach((x,i)=>{
+          const tid=id(p.id,'drill','ex',i); const on=!!state[tid]; const lk=dlock&&!on;
+          const te=document.createElement('label');
+          te.className='task drilltask'+(on?' checked':'')+(lk?' gatelock':'');
+          te.innerHTML=`<input type="checkbox" ${on?'checked':''} ${lk?'disabled':''} data-id="${tid}">
+            <span><span class="tl">${x.t}</span><span class="tc">${x.s}${lk?' · locked until theory topics are done':''}</span></span>`;
+          sb.appendChild(te);
+        });
+        if(s.reps.length){
+          const re=document.createElement('div'); re.className='phase reps';
+          re.innerHTML=`<div class="phhead reps"><span class="phtag">carried reps</span><span class="phname">Warm-up, every session in this project</span></div>
+            <ul class="covers">${s.reps.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+          const rid=id(p.id,'drill','reps',0); const ron=!!state[rid];
+          const rl=document.createElement('label'); rl.className='task drilltask'+(ron?' checked':'');
+          rl.innerHTML=`<input type="checkbox" ${ron?'checked':''} data-id="${rid}">
+            <span><span class="tl">Warm-up reps done across this project's sessions.</span><span class="tc">15–20 min per session · unlocks Build's carried phase · ${PTS.drill} pts</span></span>`;
+          re.appendChild(rl); sb.appendChild(re);
+        }
+      }else{
+        const ot=orientTasks(p,s);
+        if(ot){
+          const oe=document.createElement('div');oe.className='phase';
+          oe.innerHTML=`<div class="phhead design"><span class="phtag">orientation</span><span class="phname">${s.v===1?'App orientation — Claude teaches the app, then tests you':'Re-orientation — what the new code changed'}</span></div>`;
+          ot.forEach((t,i)=>{
+            const tid=id(p.id,'build',orientTag(s),i); const on=!!state[tid];
+            const te=document.createElement('label'); te.className='task designtask'+(on?' checked':'');
+            te.innerHTML=`<input type="checkbox" ${on?'checked':''} data-id="${tid}">
+              <span><span class="tl">${t.t}</span><span class="tc">${t.c} · ${PTS.build} pts</span></span>`;
+            oe.appendChild(te);
+          });
+          sb.appendChild(oe);
+        }
+        if(s.design){
+          const did=id(p.id,'build','design',s.v); const don=!!state[did];
+          const de=document.createElement('div'); de.className='dblock';
+          de.innerHTML=`<label class="dhead"><input type="checkbox" ${don?'checked':''} data-id="${did}">
+            <span><span class="dname">${s.design.t}</span>
+            <span class="dnote">Claude presents this after orientation · read, confirm, then task 1</span></span></label>
+            <ul class="covers">${s.design.c.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+          sb.appendChild(de);
+        }
+        s.phases.forEach(ph=>{
+          const pe=document.createElement('div');pe.className='phase';
+          const isCar=ph.tag==='carried', isDes=ph.tag==='design';
+          pe.innerHTML=`<div class="phhead${ph.shift?' shift':''}${isCar?' carried':''}${isDes?' design':''}">
+            <span class="phtag">${ph.tag}</span><span class="phname">${ph.name}</span></div>`;
+          ph.tasks.forEach((t,i)=>{
+            const tid=id(p.id,s.kind,ph.tag,i); const on=!!state[tid];
+            const lk=isCar&&!on&&!repsDone(p);
+            const te=document.createElement('label');
+            te.className='task'+(on?' checked':'')+(isCar?' carriedtask':'')+(isDes?' designtask':'')+(lk?' gatelock':'');
+            te.innerHTML=`<input type="checkbox" ${on?'checked':''} ${lk?'disabled':''} data-id="${tid}">
+              <span><span class="tl">${t.t}</span><span class="tc">${t.c}${lk?' · locked until warm-up reps are ticked':''}</span></span>`;
+            pe.appendChild(te);
+          });
+          sb.appendChild(pe);
+        });
+      }
+      se.appendChild(sb); body.appendChild(se);
+    });
+
+    const pb=document.createElement('div'); pb.className='phase';
+    pb.innerHTML=`<div class="phhead"><span class="phtag">building in public</span><span class="phname">Three posts for this project — Claude flags the moment and drafts</span></div>`;
+    POST_SLOTS.forEach((x,i)=>{
+      const tid=id(p.id,'post',i); const on=!!state[tid];
+      const te=document.createElement('label'); te.className='task posttask'+(on?' checked':'');
+      te.innerHTML=`<input type="checkbox" ${on?'checked':''} data-id="${tid}">
+        <span><span class="tl">${x.t}</span><span class="tc">${x.c} · own domain first, then LinkedIn · ${PTS.post} pts</span></span>`;
+      pb.appendChild(te);
+    });
+    body.appendChild(pb);
+
+    const oid=id(p.id,'ontime'); const oon=!!state[oid];
+    const oe=document.createElement('label'); oe.className='ontime';
+    oe.innerHTML=`<input type="checkbox" ${oon?'checked':''} data-id="${oid}">
+      <span>Finished inside the ${p.days}-day budget &nbsp;·&nbsp; +${PTS.ontime} pts</span>`;
+    body.appendChild(oe);
+
+    head.addEventListener('click',()=>{body.classList.toggle('open');head.classList.toggle('open');});
+    el.appendChild(head);el.appendChild(body);root.appendChild(el);
+
+    (typeof CERTS!=='undefined'?CERTS:[]).filter(c=>c.after===p.id).forEach(c=>{
+      let cd=0; c.items.forEach((x,i)=>{gPossible+=PTS.cert;if(state[id('cert',c.id,i)]){cd++;gEarned+=PTS.cert;}});
+      const ce=document.createElement('div'); ce.className='cert';
+      const ch=document.createElement('div'); const ck='cert-'+c.id;
+      ch.className='phead'+(open.has(ck)?' open':'');
+      const due=new Date(c.due+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+      const f=(cd/c.items.length)*100;
+      ch.innerHTML=`<div class="ptop"><span><span class="pnum">cert · ${c.code}</span> <span class="ptitle">${c.name}</span></span>
+        <span class="pscore">${cd}/${c.items.length} <span class="chev">›</span></span></div>
+        <div class="pmeta">${c.days} day budget · not gated · ${c.cost}</div>
+        <div class="pmeta"><span class="due${cd===c.items.length?' done':''}">target ${due}</span></div>
+        <div class="pbrief">${c.why}</div>
+        <div class="pbar"><span class="seg" style="width:100%;background:linear-gradient(to right,var(--gold) ${f}%,var(--border) ${f}%)"></span></div>`;
+      const cb=document.createElement('div'); cb.className='body'+(open.has(ck)?' open':''); cb.dataset.pid=ck;
+      cb.innerHTML=`<div class="certnote">Revision, practice exams and the reteach are free and happen with Claude on schedule. Only the real exam costs money — sit it when you can afford it. Nothing here locks the next project.</div>`;
+      c.items.forEach((x,i)=>{
+        const tid=id('cert',c.id,i); const on=!!state[tid];
+        const te=document.createElement('label'); te.className='task certtask'+(on?' checked':'');
+        te.innerHTML=`<input type="checkbox" ${on?'checked':''} data-id="${tid}">
+          <span><span class="tl">${x.t}</span><span class="tc">${x.c} · ${PTS.cert} pts</span></span>`;
+        cb.appendChild(te);
+      });
+      ch.addEventListener('click',()=>{cb.classList.toggle('open');ch.classList.toggle('open');});
+      ce.appendChild(ch);ce.appendChild(cb);root.appendChild(ce);
+    });
+  });
+
+  const pub=document.getElementById('pub'); pub.innerHTML=`<div class="pubhead"><span class="skind">building in public · one-time setup</span><span class="sname">Before the first project post</span></div>
+    <div class="pubnote">Being good and being hired are different problems. Applications open around project 09 with 8–10 posts already up — nobody gets past location filtering without work someone has seen.</div>`;
+  PUB_SETUP.forEach((x,i)=>{
+    const tid=id('pub','setup',i); const on=!!state[tid];
+    const te=document.createElement('label'); te.className='task posttask'+(on?' checked':'');
+    te.innerHTML=`<input type="checkbox" ${on?'checked':''} data-id="${tid}">
+      <span><span class="tl">${x.t}</span><span class="tc">${x.c}</span></span>`;
+    pub.appendChild(te);
+  });
+  let nposts=0; PROJECTS.forEach(p=>POST_SLOTS.forEach((x,i)=>{if(state[id(p.id,'post',i)])nposts++;}));
+  document.getElementById('posts').textContent=nposts+'/'+(PROJECTS.length*POST_SLOTS.length);
+  document.getElementById('ci').textContent=state.checkins||0;
+  document.getElementById('cip').textContent=(state.checkins||0)*PTS.checkin;
+  const g=document.getElementById('grand');
+  document.getElementById('gt').textContent=g.classList.contains('hidden')?'tap to reveal':`${gEarned} / ${gPossible}`;
+
+  document.querySelectorAll('#pub input[type=checkbox], #projects input[type=checkbox]').forEach(cb=>{cb.disabled=true;});
+  document.querySelectorAll('#pub input[type=checkbox], #projects input[type=checkbox]').forEach(cb=>{
+    cb.addEventListener('change',async e=>{
+      state[e.target.dataset.id]=e.target.checked;
+      render();
+      await save();
+    });
+  });
+}
+
+document.getElementById('cib').addEventListener('click',async()=>{
+  state.checkins=(state.checkins||0)+1; render(); await save();
+});
+document.getElementById('grand').addEventListener('click',()=>{
+  document.getElementById('grand').classList.toggle('hidden'); render();
+});
+
+render();
+load().then(render);
+</script>
+</body></html>
